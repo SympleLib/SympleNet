@@ -13,7 +13,7 @@ namespace Symple::Net
 		asio::io_context &m_Context;
 
 		ThreadSafeQueue<Message<T>> m_MessagesToSend;
-		ThreadSafeQueue<OwnedMessage<T>> &m_MessagesToRead;
+		ThreadSafeQueue<OwnedMessage<T>> &m_RecievedMessages;
 	public:
 		Connection()
 		{}

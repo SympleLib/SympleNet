@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <Symple/Net/Client.h>
+#include <Symple/Net/Server.h>
 
 int main()
 {
