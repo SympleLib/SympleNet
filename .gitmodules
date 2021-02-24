@@ -1,0 +1,3 @@
+[submodule "SympleNet/vendor/asio"]
+	path = SympleNet/vendor/asio
+	url = https://github.com/boostorg/asio.git
