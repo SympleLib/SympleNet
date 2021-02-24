@@ -5,7 +5,7 @@
 namespace Symple::Net
 {
 	template<typename T>
-	struct Message
+	struct Message final
 	{
 		MessageHeader<T> Header {};
 		std::vector<uint8_t> Body {};

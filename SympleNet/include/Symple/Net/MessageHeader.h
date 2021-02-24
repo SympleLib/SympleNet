@@ -5,7 +5,7 @@
 namespace Symple::Net
 {
 	template<typename T>
-	struct MessageHeader
+	struct MessageHeader final
 	{
 		T Id {};
 		uint32_t Size {};

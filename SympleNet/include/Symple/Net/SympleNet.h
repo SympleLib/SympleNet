@@ -1,6 +1,4 @@
 #pragma once
 
-#include <cstdint>
-
-#include "Symple/Net/Common.h"
-#include "Symple/Net/Message.h"
+#include "Symple/Net/Connection.h"
+#include "Symple/Net/ThreadSafeQueue.h"

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cstdio>
+#include <queue>
+#include <cstdint>
 #include <algorithm>
 
 #if defined(_WIN32)
