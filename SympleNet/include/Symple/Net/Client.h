@@ -54,6 +54,8 @@ namespace Symple::Net
 			m_Context.stop();
 			if (m_ContextThread.joinable())
 				m_ContextThread.join();
+
+			m_Connection.release();
 		}
 
 		bool IsConnected() const
