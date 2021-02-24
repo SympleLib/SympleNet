@@ -10,7 +10,7 @@ namespace Symple::Net
 	{
 	public: enum class Owner;
 	private:
-		asio::ip::tcp::socket m_Scoket;
+		asio::ip::tcp::socket m_Socket;
 		asio::io_context &m_AsioContext;
 
 		ThreadSafeQueue<Message<T>> m_MessagesToSend;
@@ -21,7 +21,7 @@ namespace Symple::Net
 		Message<T> m_TempMsg;
 	public:
 		Connection(Owner owner, asio::io_context &asioContext, asio::ip::tcp::socket socket, ThreadSafeQueue<OwnedMessage<T>> &recievedMessages)
-			: m_Owner(owner), m_AsioContext(asioContext), m_Scoket(std::move(socket)), m_RecievedMessages(recievedMessages)
+			: m_Owner(owner), m_AsioContext(asioContext), m_Socket(std::move(socket)), m_RecievedMessages(recievedMessages)
 		{}
 
 		~Connection()
@@ -44,11 +44,11 @@ namespace Symple::Net
 		bool Disconnect()
 		{
 			if (IsConnected())
-				asio::post(m_AsioContext, [this]() { m_Scoket.close(); });
+				asio::post(m_AsioContext, [this]() { m_Socket.close(); });
 		}
 
 		bool IsConnected() const
-		{ return m_Scoket.is_open(); }
+		{ return m_Socket.is_open(); }
 
 		bool Send(const Message<T> &msg)
 		{
@@ -58,7 +58,9 @@ namespace Symple::Net
 					bool isWriting = !m_MessagesToSend.IsEmpty();
 					m_MessagesToSend.PushBack(msg);
 					if (!isWriting)
+					{
 						WriteHeader();
+					}
 				});
 		}
 	private:
@@ -70,7 +72,7 @@ namespace Symple::Net
 					if (ec)
 					{
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to read header.\n";
-						m_Scoket.close();
+						m_Socket.close();
 					}
 					else
 						if (m_TempMsg.Header.Size > 0)
@@ -85,13 +87,13 @@ namespace Symple::Net
 
 		[[async]] void ReadBody()
 		{
-			asio::async_read(m_Socket, asio::buffer(&m_TempMsg.Body.data(), m_TempMsg.Body.size())),
+			asio::async_read(m_Socket, asio::buffer(m_TempMsg.Body.data(), m_TempMsg.Body.size()),
 				[this](std::error_code ec, std::size_t len)
 				{
 					if (ec)
 					{
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to read body.\n";
-						m_Scoket.close();
+						m_Socket.close();
 					}
 					else
 						AddToIncomingMessageQueue();
@@ -106,7 +108,7 @@ namespace Symple::Net
 					if (ec)
 					{
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to write header.\n";
-						m_Scoket.close();
+						m_Socket.close();
 					}
 					else
 					{
@@ -124,13 +126,13 @@ namespace Symple::Net
 
 		[[async]] void WriteBody()
 		{
-			asio::async_write(m_Socket, asio::buffer(&m_MessagesToSend.Front().Header, m_MessagesToSend.Front().Body.size())),
+			asio::async_write(m_Socket, asio::buffer(m_MessagesToSend.Front().Body.data(), m_MessagesToSend.Front().Body.size()),
 				[this](std::error_code ec, std::size_t len)
 				{
 					if (ec)
 					{
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to write body.\n";
-						m_Scoket.close();
+						m_Socket.close();
 					}
 					else
 					{
@@ -144,7 +146,7 @@ namespace Symple::Net
 		[[async]] void AddToIncomingMessageQueue()
 		{
 			if (m_Owner == Owner::Server)
-				m_RecievedMessages.PushBack({ shared_from_this(), m_TempMsg });
+				m_RecievedMessages.PushBack({ this->shared_from_this(), m_TempMsg });
 			else
 				m_RecievedMessages.PushBack({ nullptr, m_TempMsg });
 
