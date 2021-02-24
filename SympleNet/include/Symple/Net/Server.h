@@ -10,7 +10,7 @@ namespace Symple::Net
 	{
 	protected:
 		ThreadSafeQueue<OwnedMessage<T>> m_RecievedMessages;
-		std::deque<std::shared_ptr<Connection<T>> m_Connections;
+		std::deque<std::shared_ptr<Connection<T>>> m_Connections;
 
 		asio::io_context m_AsioContext;
 		std::thread m_ContextThread;
@@ -29,10 +29,10 @@ namespace Symple::Net
 		{
 			try
 			{
-				WaitForClientConnection();
-				m_ContextThread = std::thread([this]() { m_AsioContext.run() });
+				WaitForClientConnectionAsync();
+				m_ContextThread = std::thread([this]() { m_AsioContext.run(); });
 
-				std::cerr << "[!]<Server>: Started!\n";
+				std::cout << "[!]<Server>: Started!\n";
 				return true;
 			}
 			catch (std::exception &e)
@@ -48,10 +48,10 @@ namespace Symple::Net
 			if (m_ContextThread.joinable())
 				m_ContextThread.join();
 
-			std::err << "[!]<Server>: Stopped!\n";
+			std::cerr << "[!]<Server>: Stopped!\n";
 		}
 
-		[[async]] void WaitForClientConnection()
+		void WaitForClientConnectionAsync()
 		{
 			m_AsioAcceptor.async_accept(
 				[this](std::error_code ec, asio::ip::tcp::socket socket)
@@ -62,21 +62,21 @@ namespace Symple::Net
 					{
 						std::cout << "[$]<Server> New connection: " << socket.remote_endpoint() << '\n';
 
-						//std::shared_ptr<Connection<T>> client = std::make_shared<Connection<T>>(Connection<T>::Owner::Server,
-						//	m_AsioContext, std::move(socket), m_RecievedMessages);
+						std::shared_ptr<Connection<T>> client = std::make_shared<Connection<T>>(Connection<T>::Owner::Server,
+							m_AsioContext, std::move(socket), m_RecievedMessages);
 
-						//if (OnClientConnect(client))
-						//{
-						//	m_Connections.push_back(std::move(client));
-						//	m_Connections.back()->ConnectToClient(m_IdCounter++);
+						if (OnClientConnect(client))
+						{
+							m_Connections.push_back(std::move(client));
+							m_Connections.back()->ConnectToClient(m_IdCounter++);
 
-						//	std::cout << "[$]<" << m_Connections.back()->GetId() << ">: Connection approved!\n" << socket.remote_endpoint() << '\n';
-						//}
-						//else
-						//	std::cout << "[$]: Connection denied!\n";
+							std::cout << "[$]<Client #" << m_Connections.back()->GetId() << ">: Connection approved!\n";
+						}
+						else
+							std::cout << "[$]: Connection denied!\n";
 					}
 
-					WaitForClientConnection();
+					WaitForClientConnectionAsync();
 				});
 		}
 
@@ -129,7 +129,7 @@ namespace Symple::Net
 		}
 	protected:
 		virtual bool OnClientConnect(std::shared_ptr<Connection<T>> client)
-		{ return false; }
+		{ return true; }
 
 		virtual void OnClientDisconnect(std::shared_ptr<Connection<T>> client)
 		{ }
