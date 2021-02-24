@@ -27,14 +27,12 @@ namespace Symple::Net
 			try
 			{
 				asio::ip::tcp::resolver resolver(m_Context);
-				asio::ip::tcp::resolver::endpoint_type endpoint = resolver.resolve(host)
+				asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(host, std::to_string(port));
 
-				m_Connection = std::make_unique<Connection<T>>();
+				m_Connection = std::make_unique<Connection<T>>(Connection<T>::Owner::Client,
+					m_Context, asio::ip::tcp::socket(m_Context), m_RecievedMessages);
 
-				asio::ip::tcp::resolver resolver(m_Context);
-				m_EndPoints = resolver.resolve(host, std::to_string(port));
-
-				m_Connection->ConnectToServer(m_EndPoints);
+				m_Connection->ConnectToServer(endpoints);
 				m_ContextThread = std::thread([this]() { m_Context.run(); });
 
 				return true;

@@ -39,7 +39,18 @@ namespace Symple::Net
 			}
 		}
 
-		bool ConnectToServer();
+		bool ConnectToServer(const asio::ip::tcp::resolver::results_type &endpoints)
+		{
+			if (m_Owner == Owner::Client)
+			{
+				asio::async_connect(m_Socket, endpoints,
+					[this](std::error_code ec, asio::ip::tcp::endpoint endpoint)
+					{
+						if (!ec)
+							ReadHeader();
+					});
+			}
+		}
 
 		bool Disconnect()
 		{
