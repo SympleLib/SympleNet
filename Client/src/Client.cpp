@@ -79,7 +79,7 @@ int main()
 					std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 					std::chrono::system_clock::time_point then;
 					msg >> then;
-					std::cout << "Ping: " << std::chrono::duration<double>(now - then).count() << ".\n";
+					std::cout << "Ping: " << std::chrono::duration_cast<std::chrono::milliseconds>(now - then).count() << "ms.\n";
 					break;
 				}
 				case NetworkMessage::Message:
