@@ -10,7 +10,7 @@ void GetDataAsync(asio::ip::tcp::socket &socket)
 		{
 			if (!err)
 			{
-				std::cout << "\n\nRead " << len << " bytes\n\n";
+				std::cout << "\n\n\tRead " << len << " bytes\n\n";
 
 				for (size_t i = 0; i < len; i++)
 					std::cout << buff[i];
