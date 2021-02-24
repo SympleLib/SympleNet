@@ -117,8 +117,11 @@ namespace Symple::Net
 					std::remove(m_Connections.begin(), m_Connections.end(), nullptr), m_Connections.end());
 		}
 
-		void Update(size_t maxMessages = -1)
+		void Update(bool wait = true, size_t maxMessages = -1)
 		{
+			if (wait)
+				m_RecievedMessages.Wait();
+
 			size_t msgCount = 0;
 			while (msgCount < maxMessages && !m_RecievedMessages.IsEmpty())
 			{

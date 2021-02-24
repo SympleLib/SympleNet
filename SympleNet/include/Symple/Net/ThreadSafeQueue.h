@@ -12,6 +12,7 @@ namespace Symple::Net
 	private:
 		std::mutex m_Mutex;
 		std::deque<T> m_Deq;
+		std::condition_variable m_Blocking;
 	public:
 		ThreadSafeQueue() = default;
 		ThreadSafeQueue(const ThreadSafeQueue &) = delete;
@@ -60,12 +61,6 @@ namespace Symple::Net
 			return m_Deq.empty();
 		}
 
-		void Clear()
-		{
-			SYNCHRONIZED;
-			m_Deq.clear();
-		}
-
 		size_t Count()
 		{
 			SYNCHRONIZED;
@@ -86,6 +81,21 @@ namespace Symple::Net
 			auto item = std::move(m_Deq.back());
 			m_Deq.pop_back();
 			return item;
+		}
+
+		void Clear()
+		{
+			SYNCHRONIZED;
+			m_Deq.clear();
+		}
+
+		void Wait()
+		{
+			while (IsEmpty())
+			{
+				std::unique_lock<std::mutex> lock(m_Mutex);
+				m_Blocking.wait(lock);
+			}
 		}
 	};
 

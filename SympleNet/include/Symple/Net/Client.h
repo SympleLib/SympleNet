@@ -59,6 +59,12 @@ namespace Symple::Net
 		bool IsConnected() const
 		{ return m_Connection && m_Connection->IsConnected(); }
 
+		void Send(const Message<T> &msg)
+		{
+			if (IsConnected())
+				m_Connection->Send(msg);
+		}
+
 		ThreadSafeQueue<OwnedMessage<T>> &IncomingMessages()
 		{ return m_RecievedMessages; }
 

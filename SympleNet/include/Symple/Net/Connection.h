@@ -39,7 +39,7 @@ namespace Symple::Net
 			}
 		}
 
-		bool ConnectToServer(const asio::ip::tcp::resolver::results_type &endpoints)
+		void ConnectToServer(const asio::ip::tcp::resolver::results_type &endpoints)
 		{
 			if (m_Owner == Owner::Client)
 			{
@@ -52,7 +52,7 @@ namespace Symple::Net
 			}
 		}
 
-		bool Disconnect()
+		void Disconnect()
 		{
 			if (IsConnected())
 				asio::post(m_AsioContext, [this]() { m_Socket.close(); });
@@ -61,7 +61,7 @@ namespace Symple::Net
 		bool IsConnected() const
 		{ return m_Socket.is_open(); }
 
-		bool Send(const Message<T> &msg)
+		void Send(const Message<T> &msg)
 		{
 			asio::post(m_AsioContext,
 				[this, msg]()
