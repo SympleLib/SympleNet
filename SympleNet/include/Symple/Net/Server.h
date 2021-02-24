@@ -29,7 +29,7 @@ namespace Symple::Net
 		{
 			try
 			{
-				WaitForClientConnectionAsync();
+				WaitForClientConnection();
 				m_ContextThread = std::thread([this]() { m_AsioContext.run(); });
 
 				std::cout << "[!]<Server>: Started!\n";
@@ -51,7 +51,7 @@ namespace Symple::Net
 			std::cerr << "[!]<Server>: Stopped!\n";
 		}
 
-		void WaitForClientConnectionAsync()
+		[[async]] void WaitForClientConnection()
 		{
 			m_AsioAcceptor.async_accept(
 				[this](std::error_code ec, asio::ip::tcp::socket socket)
@@ -76,7 +76,7 @@ namespace Symple::Net
 							std::cout << "[$]: Connection denied!\n";
 					}
 
-					WaitForClientConnectionAsync();
+					WaitForClientConnection();
 				});
 		}
 

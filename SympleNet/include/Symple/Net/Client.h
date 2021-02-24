@@ -26,6 +26,9 @@ namespace Symple::Net
 		{
 			try
 			{
+				asio::ip::tcp::resolver resolver(m_Context);
+				asio::ip::tcp::resolver::endpoint_type endpoint = resolver.resolve(host)
+
 				m_Connection = std::make_unique<Connection<T>>();
 
 				asio::ip::tcp::resolver resolver(m_Context);
