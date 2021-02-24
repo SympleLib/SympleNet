@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <Symple/Net/SympleNet.h>
+#include <Symple/Net/Client.h>
 
 int main()
 {
