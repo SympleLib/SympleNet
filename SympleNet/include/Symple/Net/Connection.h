@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Symple/Net/OwnedMessage.h"
+#include "Symple/Net/ThreadSafeQueue.h"
 
 namespace Symple::Net
 {
@@ -8,7 +9,11 @@ namespace Symple::Net
 	class Connection final: public std::enable_shared_from_this<Connection<T>>
 	{
 	private:
-		
+		asio::ip::tcp::socket m_Scoket;
+		asio::io_context &m_Context;
+
+		ThreadSafeQueue<Message<T>> m_MessagesToSend;
+		ThreadSafeQueue<OwnedMessage<T>> &m_MessagesToRead;
 	public:
 		Connection()
 		{}
