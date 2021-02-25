@@ -12,12 +12,10 @@ namespace Symple::Net
 	protected:
 		asio::io_context m_Context;
 		std::thread m_ContextThread;
-		asio::ip::tcp::socket m_Socket;
 
 		std::unique_ptr<Connection<T>> m_Connection;
 	public:
-		Client()
-			: m_Socket(m_Context) {}
+		Client() = default;
 
 		virtual ~Client()
 		{ Disconnect(); }

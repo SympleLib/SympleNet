@@ -22,10 +22,10 @@ namespace Symple::Net
 	public:
 		Connection(Owner owner, asio::io_context &asioContext, asio::ip::tcp::socket socket, ThreadSafeQueue<OwnedMessage<T>> &recievedMessages)
 			: m_Owner(owner), m_AsioContext(asioContext), m_Socket(std::move(socket)), m_RecievedMessages(recievedMessages)
-		{}
+		{ }
 
 		~Connection()
-		{}
+		{ }
 
 		uint32_t GetId() const
 		{ return m_Id; }
@@ -69,9 +69,7 @@ namespace Symple::Net
 					bool isWriting = !m_MessagesToSend.IsEmpty();
 					m_MessagesToSend.PushBack(msg);
 					if (!isWriting)
-					{
 						WriteHeader();
-					}
 				});
 		}
 	private:
@@ -122,7 +120,6 @@ namespace Symple::Net
 						m_Socket.close();
 					}
 					else
-					{
 						if (m_MessagesToSend.Front().Body.size() > 0)
 							WriteBody();
 						else
@@ -131,7 +128,6 @@ namespace Symple::Net
 							if (!m_MessagesToSend.IsEmpty())
 								WriteHeader();
 						}
-					}
 				});
 		}
 

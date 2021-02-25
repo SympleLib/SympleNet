@@ -11,7 +11,7 @@ namespace Symple::Net
 		std::vector<uint8_t> Body {};
 
 		size_t Size() const
-		{ return sizeof(MessageHeader<T>) + Body.size(); }
+		{ return Body.size(); }
 		
 		friend std::ostream &operator <<(std::ostream &os, const Message &msg)
 		{ return os << "ID: " << uint32_t(msg.Header.Id) << " Size: " << msg.Header.Size; }
