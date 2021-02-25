@@ -57,6 +57,12 @@ namespace Symple::Net
 		bool IsConnected() const
 		{ return m_Connection && m_Connection->IsConnected(); }
 
+		void Disconnect() const
+		{
+			if (IsConnected())
+				m_Connection->Disconnect();
+		}
+
 		void Send(const Message<T> &msg)
 		{
 			if (IsConnected())
@@ -68,5 +74,28 @@ namespace Symple::Net
 
 		const ThreadSafeQueue<OwnedMessage<T>> &IncomingMessages() const
 		{ return m_RecievedMessages; }
+
+		void Update(bool wait = true, size_t maxMessages = -1)
+		{
+			if (wait)
+				m_RecievedMessages.Wait();
+
+			size_t msgCount = 0;
+			while (msgCount < maxMessages && !m_RecievedMessages.IsEmpty())
+			{
+				auto msg = m_RecievedMessages.PopFront();
+				OnMessageRecieve(msg.Message);
+				msgCount++;
+			}
+		}
+	protected:
+		virtual bool OnConnect()
+		{ return true; }
+
+		virtual void OnDisconnect()
+		{}
+
+		virtual void OnMessageRecieve(Message<T> &msg)
+		{}
 	};
 }
