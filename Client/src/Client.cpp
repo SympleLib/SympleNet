@@ -16,6 +16,8 @@ private:
 public:
 	void Ping()
 	{
+		std::cout << "Pinging server...\n";
+
 		Symple::Net::Message<NetworkMessage> msg;
 		msg.Header.Id = NetworkMessage::Ping;
 
@@ -26,6 +28,8 @@ public:
 
 	void MessageAll()
 	{
+		std::cout << "Messaging all...\n";
+
 		Symple::Net::Message<NetworkMessage> msg;
 		msg.Header.Id = NetworkMessage::MessageAll;
 		Send(msg);

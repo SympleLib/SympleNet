@@ -33,6 +33,8 @@ protected:
 
 	virtual void OnMessageRecieve(std::shared_ptr<Connection> client, Symple::Net::Message<NetworkMessage> &msg) override
 	{
+		std::cout << "Client #" << client->GetId() << " sent a message" << msg << '\n';
+
 		switch (msg.Header.Id)
 		{
 		case NetworkMessage::Ping:
@@ -60,7 +62,7 @@ int main()
 	server.Start();
 
 	while (true)
-		server.Update(false);
+		server.Update();
 
 	system("pause");
 }
