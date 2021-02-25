@@ -26,15 +26,20 @@ namespace Symple::Net
 		uint64_t m_HandshakeIn;
 		uint64_t m_HandshakeOut;
 		uint64_t m_HandshakeCheck;
+		ScrambleFunction m_Scramble;
 	public:
-		Connection(Owner owner, asio::io_context &asioContext, asio::ip::tcp::socket socket, ThreadSafeQueue<OwnedMessage<T>> &recievedMessages)
-			: m_Owner(owner), m_AsioContext(asioContext), m_Socket(std::move(socket)), m_RecievedMessages(recievedMessages)
+		Connection(Owner owner,
+			asio::io_context &asioContext, asio::ip::tcp::socket socket, ThreadSafeQueue<OwnedMessage<T>> &recievedMessages,
+				ScrambleFunction scrambleFn = Scramble)
+			: m_Owner(owner),
+				m_AsioContext(asioContext), m_Socket(std::move(socket)), m_RecievedMessages(recievedMessages),
+					m_Scramble(scrambleFn)
 		{
 			if (m_Owner == Owner::Server)
 			{
 				m_HandshakeOut = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
-				m_HandshakeCheck = Scramble(m_HandshakeOut);
-				#if SY_NET_ENABLE_LOGGING && SY_NET_SHOW_VALIDATION
+				m_HandshakeCheck = m_Scramble(m_HandshakeOut);
+				#if defined(SY_NET_SHOW_VALIDATION)
 				std::cout << "[$]<Server>: Validation key: { In: " << m_HandshakeOut << ", Out: " << m_HandshakeCheck << " }";
 				#endif
 			}
@@ -103,7 +108,7 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
-						#if SY_NET_ENABLE_LOGGING
+						#if defined(SY_NET_ENABLE_LOGGING)
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to read header.\n";
 						#endif
 						m_Socket.close();
@@ -126,7 +131,7 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
-						#if SY_NET_ENABLE_LOGGING
+						#if defined(SY_NET_ENABLE_LOGGING)
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to read body.\n";
 						#endif
 						m_Socket.close();
@@ -143,7 +148,7 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
-						#if SY_NET_ENABLE_LOGGING
+						#if defined(SY_NET_ENABLE_LOGGING)
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to write header.\n";
 						#endif
 						m_Socket.close();
@@ -167,7 +172,7 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
-						#if SY_NET_ENABLE_LOGGING
+						#if defined(SY_NET_ENABLE_LOGGING)
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to write body.\n";
 						#endif
 						m_Socket.close();
@@ -189,13 +194,6 @@ namespace Symple::Net
 				m_RecievedMessages.PushBack({ nullptr, m_TempMsg });
 
 			ReadHeader();
-		}
-
-		uint64_t Scramble(uint64_t in)
-		{
-			uint64_t out = in ^ 0x8BEEFFa;
-			out = (out & 0x694201337) >> 4 | (out & 0x133742069) << 4;
-			return out ^ 0xC0DE2FACE;
 		}
 
 		[[async]] void WriteValidation()
@@ -220,7 +218,7 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
-						#if SY_NET_ENABLE_LOGGING
+						#if defined(SY_NET_ENABLE_LOGGING)
 						std::cerr << "[!]<Server>: Client disconnected while validating.\n";
 						#endif
 						m_Socket.close();
@@ -230,7 +228,7 @@ namespace Symple::Net
 						{
 							if (m_HandshakeIn == m_HandshakeCheck)
 							{
-								#if SY_NET_ENABLE_LOGGING
+								#if defined(SY_NET_ENABLE_LOGGING)
 								std::cout << "[!]<Server>: Client validated!\n";
 								#endif
 								server->OnClientValidated(this->shared_from_this());
@@ -239,7 +237,7 @@ namespace Symple::Net
 							}
 							else
 							{
-								#if SY_NET_ENABLE_LOGGING
+								#if defined(SY_NET_ENABLE_LOGGING)
 								std::cerr << "[!]<Server>: Client (" << m_Socket.remote_endpoint() << ") failed validation.\n";
 								#endif
 								m_Socket.close();
@@ -247,8 +245,8 @@ namespace Symple::Net
 						}
 						else
 						{
-							m_HandshakeOut = Scramble(m_HandshakeIn);
-							#if SY_NET_ENABLE_LOGGING && SY_NET_SHOW_VALIDATION
+							m_HandshakeOut = m_Scramble(m_HandshakeIn);
+							#if defined(SY_NET_SHOW_VALIDATION)
 							std::cout << "[$]<Client>: Validation key: { In: " << m_HandshakeIn << ", Out: " << m_HandshakeOut << " }";
 							#endif
 							WriteValidation();

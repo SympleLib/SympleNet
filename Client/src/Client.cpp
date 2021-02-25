@@ -1,3 +1,5 @@
+#define SY_NET_ENABLE_LOGGING
+#define SY_NET_SHOW_VALIDATION
 #include <Symple/Net/Client.h>
 
 enum class NetworkMessage: uint32_t

@@ -17,9 +17,10 @@ namespace Symple::Net
 
 		asio::ip::tcp::acceptor m_AsioAcceptor;
 		uint32_t m_IdCounter = 0;
+		ScrambleFunction m_Scramble;
 	public:
-		Server(uint16_t port)
-			: m_AsioAcceptor(m_AsioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
+		Server(uint16_t port, ScrambleFunction scrambleFn = Scramble)
+			: m_AsioAcceptor(m_AsioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)), m_Scramble(scrambleFn)
 		{ }
 
 		virtual ~Server()
@@ -32,14 +33,14 @@ namespace Symple::Net
 				WaitForClientConnection();
 				m_ContextThread = std::thread([this]() { m_AsioContext.run(); });
 
-				#if SY_NET_ENABLE_LOGGING
+				#if defined(SY_NET_ENABLE_LOGGING)
 				std::cout << "[$]<Server>: Started!\n";
 				#endif
 				return true;
 			}
 			catch (std::exception &e)
 			{
-				#if !SY_NET_DISABLE_EXCEPTION_LOGGING
+				#if !defined(SY_NET_DISABLE_EXCEPTION_LOGGING)
 				std::cerr << "[!]<Server> Exception: " << e.what() << '\n';
 				#endif
 				return false;
@@ -52,7 +53,7 @@ namespace Symple::Net
 			if (m_ContextThread.joinable())
 				m_ContextThread.join();
 
-			#if SY_NET_ENABLE_LOGGING
+			#if defined(SY_NET_ENABLE_LOGGING)
 			std::cerr << "[$]<Server>: Stopped!\n";
 			#endif
 		}
@@ -64,31 +65,32 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
-						#if SY_NET_ENABLE_LOGGING
+						#if defined(SY_NET_ENABLE_LOGGING)
 						std::cerr << "[!]<Server> New connection error: " << ec.message() << '\n';
 						#endif
 					}
 					else
 					{
-						#if SY_NET_ENABLE_LOGGING
+						#if defined(SY_NET_ENABLE_LOGGING)
 						std::cout << "[$]<Server> New connection: " << socket.remote_endpoint() << '\n';
 						#endif
 
 						std::shared_ptr<Connection<T>> client = std::make_shared<Connection<T>>(Connection<T>::Owner::Server,
-							m_AsioContext, std::move(socket), m_RecievedMessages);
+							m_AsioContext, std::move(socket), m_RecievedMessages,
+								m_Scramble);
 
 						if (OnClientConnect(client))
 						{
 							m_Connections.push_back(std::move(client));
 							m_Connections.back()->ConnectToClient(this, m_IdCounter++);
 
-							#if SY_NET_ENABLE_LOGGING
+							#if defined(SY_NET_ENABLE_LOGGING)
 							std::cout << "[$]<Server> Client #" << m_Connections.back()->GetId() << ": Connection approved!\n";
 							#endif
 						}
 						else
 						{
-							#if SY_NET_ENABLE_LOGGING
+							#if defined(SY_NET_ENABLE_LOGGING)
 							std::cout << "[1]<Server>: Connection denied!\n";
 							#endif
 						}

@@ -1,3 +1,5 @@
+#define SY_NET_ENABLE_LOGGING
+#define SY_NET_SHOW_VALIDATION
 #include <Symple/Net/Server.h>
 
 enum class NetworkMessage: uint32_t
@@ -24,6 +26,11 @@ protected:
 		client->Send(msg);
 
 		return true;
+	}
+
+	virtual void OnClientValidated(std::shared_ptr<Connection> client) override
+	{
+		std::cout << "Client #" << client->GetId() << " validated.\n";
 	}
 
 	virtual void OnClientDisconnect(std::shared_ptr<Connection> client) override
