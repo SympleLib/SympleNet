@@ -34,6 +34,7 @@ namespace Symple::Net
 			{
 				m_HandshakeOut = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
 				m_HandshakeCheck = Scramble(m_HandshakeOut);
+				//std::cout << "[$]<Server>: Validation key: { In: " << m_HandshakeOut << ", Out: " << m_HandshakeCheck << " }";
 			}
 			else
 			{
@@ -204,12 +205,12 @@ namespace Symple::Net
 
 		[[async]] void ReadValidation(Server<T> *server = nullptr)
 		{
-			asio::async_write(m_Socket, asio::buffer(&m_HandshakeIn, sizeof(uint64_t)),
+			asio::async_read(m_Socket, asio::buffer(&m_HandshakeIn, sizeof(uint64_t)),
 				[this, server](std::error_code ec, std::size_t len)
 				{
 					if (ec)
 					{
-						std::cerr << "[!]<Server>: Client disconnected while validating\n";
+						std::cerr << "[!]<Server>: Client disconnected while validating.\n";
 						m_Socket.close();
 					}
 					else
@@ -217,20 +218,21 @@ namespace Symple::Net
 						{
 							if (m_HandshakeIn == m_HandshakeCheck)
 							{
-								std::cout << "Client validated\n";
+								std::cout << "[!]<Server>: Client validated!\n";
 								server->OnClientValidated(this->shared_from_this());
 
 								ReadHeader();
 							}
 							else
 							{
-								std::cerr << "[!]<Server>: Client (" << m_Socket.remote_endpoint() << ") failed validation\n";
+								std::cerr << "[!]<Server>: Client (" << m_Socket.remote_endpoint() << ") failed validation.\n";
 								m_Socket.close();
 							}
 						}
 						else
 						{
 							m_HandshakeOut = Scramble(m_HandshakeIn);
+							//std::cout << "[$]<Client>: Validation key: { In: " << m_HandshakeIn << ", Out: " << m_HandshakeOut << " }";
 							WriteValidation();
 						}
 				});
