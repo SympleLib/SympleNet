@@ -68,7 +68,7 @@ namespace Symple::Net
 						if (OnClientConnect(client))
 						{
 							m_Connections.push_back(std::move(client));
-							m_Connections.back()->ConnectToClient(m_IdCounter++);
+							m_Connections.back()->ConnectToClient(this, m_IdCounter++);
 
 							std::cout << "[$]<Client #" << m_Connections.back()->GetId() << ">: Connection approved!\n";
 						}
@@ -133,6 +133,10 @@ namespace Symple::Net
 	protected:
 		virtual bool OnClientConnect(std::shared_ptr<Connection<T>> client)
 		{ return true; }
+
+		friend class Connection<T>;
+		virtual void OnClientValidated(std::shared_ptr<Connection<T>> client)
+		{ }
 
 		virtual void OnClientDisconnect(std::shared_ptr<Connection<T>> client)
 		{ }

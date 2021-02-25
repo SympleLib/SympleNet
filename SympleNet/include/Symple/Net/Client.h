@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Symple/Net/Server.h"
 #include "Symple/Net/Connection.h"
 
 namespace Symple::Net
@@ -9,6 +10,8 @@ namespace Symple::Net
 	{
 	private:
 		ThreadSafeQueue<OwnedMessage<T>> m_RecievedMessages;
+
+		uint32_t m_Id;
 	protected:
 		asio::io_context m_Context;
 		std::thread m_ContextThread;
@@ -68,6 +71,9 @@ namespace Symple::Net
 			if (IsConnected())
 				m_Connection->Send(msg);
 		}
+
+		uint32_t GetId() const
+		{ return m_Id; }
 
 		ThreadSafeQueue<OwnedMessage<T>> &IncomingMessages()
 		{ return m_RecievedMessages; }

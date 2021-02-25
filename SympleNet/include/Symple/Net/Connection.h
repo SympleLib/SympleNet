@@ -6,6 +6,9 @@
 namespace Symple::Net
 {
 	template<typename T>
+	class Server;
+
+	template<typename T>
 	class Connection final: public std::enable_shared_from_this<Connection<T>>
 	{
 	public: enum class Owner;
@@ -19,10 +22,25 @@ namespace Symple::Net
 		Owner m_Owner;
 		uint32_t m_Id = 0;
 		Message<T> m_TempMsg;
+
+		uint64_t m_HandshakeIn;
+		uint64_t m_HandshakeOut;
+		uint64_t m_HandshakeCheck;
 	public:
 		Connection(Owner owner, asio::io_context &asioContext, asio::ip::tcp::socket socket, ThreadSafeQueue<OwnedMessage<T>> &recievedMessages)
 			: m_Owner(owner), m_AsioContext(asioContext), m_Socket(std::move(socket)), m_RecievedMessages(recievedMessages)
-		{ }
+		{
+			if (m_Owner == Owner::Server)
+			{
+				m_HandshakeOut = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
+				m_HandshakeCheck = Scramble(m_HandshakeOut);
+			}
+			else
+			{
+				m_HandshakeIn = 0;
+				m_HandshakeOut = 0;
+			}
+		}
 
 		~Connection()
 		{ }
@@ -30,12 +48,14 @@ namespace Symple::Net
 		uint32_t GetId() const
 		{ return m_Id; }
 
-		void ConnectToClient(uint32_t id = 0)
+		void ConnectToClient(Server<T> *server, uint32_t id = 0)
 		{
 			if (m_Owner == Owner::Server && IsConnected())
 			{
 				m_Id = id;
-				ReadHeader();
+
+				WriteValidation();
+				ReadValidation(server);
 			}
 		}
 
@@ -47,7 +67,7 @@ namespace Symple::Net
 					[this](std::error_code ec, asio::ip::tcp::endpoint endpoint)
 					{
 						if (!ec)
-							ReadHeader();
+							ReadValidation();
 					});
 			}
 		}
@@ -158,6 +178,62 @@ namespace Symple::Net
 				m_RecievedMessages.PushBack({ nullptr, m_TempMsg });
 
 			ReadHeader();
+		}
+
+		uint64_t Scramble(uint64_t in)
+		{
+			uint64_t out = in ^ 0x8BEEFFa;
+			out = (out & 0x694201337) >> 4 | (out & 0x133742069) << 4;
+			return out ^ 0xC0DE2FACE;
+		}
+
+		[[async]] void WriteValidation()
+		{
+			asio::async_write(m_Socket, asio::buffer(&m_HandshakeOut, sizeof(uint64_t)),
+				[this](std::error_code ec, std::size_t len)
+				{
+					if (ec)
+						m_Socket.close();
+					else
+					{
+						if (m_Owner == Owner::Client)
+							ReadHeader();
+					}
+				});
+		}
+
+		[[async]] void ReadValidation(Server<T> *server = nullptr)
+		{
+			asio::async_write(m_Socket, asio::buffer(&m_HandshakeIn, sizeof(uint64_t)),
+				[this, server](std::error_code ec, std::size_t len)
+				{
+					if (ec)
+					{
+						std::cerr << "[!]<Server>: Client disconnected while validating\n";
+						m_Socket.close();
+					}
+					else
+						if (m_Owner == Owner::Server)
+						{
+							if (m_HandshakeIn == m_HandshakeCheck)
+							{
+								std::cout << "Client validated\n";
+								server->OnClientValidated(this->shared_from_this());
+
+								ReadHeader();
+							}
+							else
+							{
+								std::cerr << "[!]<Server>: Client (" << m_Socket.remote_endpoint() << ") failed validation\n";
+								m_Socket.close();
+							}
+						}
+						else
+						{
+							m_HandshakeOut = Scramble(m_HandshakeIn);
+							WriteValidation();
+						}
+				});
 		}
 	public:
 		enum class Owner
