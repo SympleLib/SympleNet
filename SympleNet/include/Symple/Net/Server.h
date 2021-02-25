@@ -32,12 +32,16 @@ namespace Symple::Net
 				WaitForClientConnection();
 				m_ContextThread = std::thread([this]() { m_AsioContext.run(); });
 
-				std::cout << "[!]<Server>: Started!\n";
+				#if SY_NET_ENABLE_LOGGING
+				std::cout << "[$]<Server>: Started!\n";
+				#endif
 				return true;
 			}
 			catch (std::exception &e)
 			{
+				#if !SY_NET_DISABLE_EXCEPTION_LOGGING
 				std::cerr << "[!]<Server> Exception: " << e.what() << '\n';
+				#endif
 				return false;
 			}
 		}
@@ -48,7 +52,9 @@ namespace Symple::Net
 			if (m_ContextThread.joinable())
 				m_ContextThread.join();
 
-			std::cerr << "[!]<Server>: Stopped!\n";
+			#if SY_NET_ENABLE_LOGGING
+			std::cerr << "[$]<Server>: Stopped!\n";
+			#endif
 		}
 
 		[[async]] void WaitForClientConnection()
@@ -57,10 +63,16 @@ namespace Symple::Net
 				[this](std::error_code ec, asio::ip::tcp::socket socket)
 				{
 					if (ec)
+					{
+						#if SY_NET_ENABLE_LOGGING
 						std::cerr << "[!]<Server> New connection error: " << ec.message() << '\n';
+						#endif
+					}
 					else
 					{
+						#if SY_NET_ENABLE_LOGGING
 						std::cout << "[$]<Server> New connection: " << socket.remote_endpoint() << '\n';
+						#endif
 
 						std::shared_ptr<Connection<T>> client = std::make_shared<Connection<T>>(Connection<T>::Owner::Server,
 							m_AsioContext, std::move(socket), m_RecievedMessages);
@@ -70,10 +82,16 @@ namespace Symple::Net
 							m_Connections.push_back(std::move(client));
 							m_Connections.back()->ConnectToClient(this, m_IdCounter++);
 
-							std::cout << "[$]<Client #" << m_Connections.back()->GetId() << ">: Connection approved!\n";
+							#if SY_NET_ENABLE_LOGGING
+							std::cout << "[$]<Server> Client #" << m_Connections.back()->GetId() << ": Connection approved!\n";
+							#endif
 						}
 						else
-							std::cout << "[$]: Connection denied!\n";
+						{
+							#if SY_NET_ENABLE_LOGGING
+							std::cout << "[1]<Server>: Connection denied!\n";
+							#endif
+						}
 					}
 
 					WaitForClientConnection();

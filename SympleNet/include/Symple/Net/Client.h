@@ -35,12 +35,13 @@ namespace Symple::Net
 
 				m_Connection->ConnectToServer(endpoints);
 				m_ContextThread = std::thread([this]() { m_Context.run(); });
-
 				return true;
 			}
 			catch (std::exception &e)
 			{
-				std::cerr << "Client exception: " << e.what() << '\n';
+				#if !SY_NET_DISABLE_EXCEPTION_LOGGING
+				std::cerr << "[!]<Client> Exception: " << e.what() << '\n';
+				#endif
 				return false;
 			}
 		}

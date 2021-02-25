@@ -34,7 +34,9 @@ namespace Symple::Net
 			{
 				m_HandshakeOut = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
 				m_HandshakeCheck = Scramble(m_HandshakeOut);
-				//std::cout << "[$]<Server>: Validation key: { In: " << m_HandshakeOut << ", Out: " << m_HandshakeCheck << " }";
+				#if SY_NET_ENABLE_LOGGING && SY_NET_SHOW_VALIDATION
+				std::cout << "[$]<Server>: Validation key: { In: " << m_HandshakeOut << ", Out: " << m_HandshakeCheck << " }";
+				#endif
 			}
 			else
 			{
@@ -101,7 +103,9 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
+						#if SY_NET_ENABLE_LOGGING
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to read header.\n";
+						#endif
 						m_Socket.close();
 					}
 					else
@@ -122,7 +126,9 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
+						#if SY_NET_ENABLE_LOGGING
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to read body.\n";
+						#endif
 						m_Socket.close();
 					}
 					else
@@ -137,7 +143,9 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
+						#if SY_NET_ENABLE_LOGGING
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to write header.\n";
+						#endif
 						m_Socket.close();
 					}
 					else
@@ -159,7 +167,9 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
+						#if SY_NET_ENABLE_LOGGING
 						std::cerr << "[!]<Client #" << m_Id << ">: Failed to write body.\n";
+						#endif
 						m_Socket.close();
 					}
 					else
@@ -210,7 +220,9 @@ namespace Symple::Net
 				{
 					if (ec)
 					{
+						#if SY_NET_ENABLE_LOGGING
 						std::cerr << "[!]<Server>: Client disconnected while validating.\n";
+						#endif
 						m_Socket.close();
 					}
 					else
@@ -218,21 +230,27 @@ namespace Symple::Net
 						{
 							if (m_HandshakeIn == m_HandshakeCheck)
 							{
+								#if SY_NET_ENABLE_LOGGING
 								std::cout << "[!]<Server>: Client validated!\n";
+								#endif
 								server->OnClientValidated(this->shared_from_this());
 
 								ReadHeader();
 							}
 							else
 							{
+								#if SY_NET_ENABLE_LOGGING
 								std::cerr << "[!]<Server>: Client (" << m_Socket.remote_endpoint() << ") failed validation.\n";
+								#endif
 								m_Socket.close();
 							}
 						}
 						else
 						{
 							m_HandshakeOut = Scramble(m_HandshakeIn);
-							//std::cout << "[$]<Client>: Validation key: { In: " << m_HandshakeIn << ", Out: " << m_HandshakeOut << " }";
+							#if SY_NET_ENABLE_LOGGING && SY_NET_SHOW_VALIDATION
+							std::cout << "[$]<Client>: Validation key: { In: " << m_HandshakeIn << ", Out: " << m_HandshakeOut << " }";
+							#endif
 							WriteValidation();
 						}
 				});
