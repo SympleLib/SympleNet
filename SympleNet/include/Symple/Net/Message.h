@@ -30,6 +30,31 @@ namespace Symple::Net
 			return msg;
 		}
 
+		template<>
+		friend Message &operator << <char *>(Message &msg, const char *data)
+		{
+			msg << *data;
+			while (*data++)
+				msg << *data;
+			return msg;
+		}
+
+		template<>
+		friend Message &operator << <std::string>(Message &msg, const std::string &data)
+		{
+			for (const char &c : data)
+				msg << c;
+			return msg;
+		}
+
+		template<>
+		friend Message &operator << <std::string_view>(Message &msg, const std::string_view &data)
+		{
+			for (const char &c : data)
+				msg << c;
+			return msg;
+		}
+
 		template<typename DataType>
 		friend Message &operator >>(Message &msg, DataType &data)
 		{

@@ -101,6 +101,10 @@ int main()
 
 	std::thread inputThread(HandleInput);
 
+	const std::string_view test = "Test!";
+	for (const char &c : test)
+		printf("Char: %c, Value: %i\n", c, c);
+
 	while (!s_ShouldQuit)
 	{
 		if (s_Client.IsConnected())
