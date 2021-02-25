@@ -62,7 +62,7 @@ int main()
 	server.Start();
 
 	while (true)
-		server.Update(false);
+		server.Update();
 
 	system("pause");
 }
