@@ -17,42 +17,42 @@ namespace Symple::Net
 		{ return os << "ID: " << uint32_t(msg.Header.Id) << " Size: " << msg.Header.Size; }
 
 		template<typename DataType>
-		friend Message &operator <<(Message &msg, const DataType &data)
+		Message &operator <<(const DataType &data)
 		{
 			static_assert(std::is_standard_layout<DataType>::value, "Data is too complex to serialize");
 
 			// Grow and copy data into body
-			size_t i = msg.Body.size();
-			msg.Body.resize(msg.Body.size() + sizeof(DataType));
-			std::memcpy(msg.Body.data() + i, &data, sizeof(DataType));
+			size_t i = Body.size();
+			Body.resize(Body.size() + sizeof(DataType));
+			std::memcpy(Body.data() + i, &data, sizeof(DataType));
 
-			msg.Header.Size = msg.Size();
-			return msg;
+			Header.Size = Size();
+			return *this;
 		}
 
 		template<>
-		friend Message &operator << <char *>(Message &msg, const char *data)
+		Message &operator <<(const char *const &data)
 		{
-			msg << *data;
+			*this << *data;
 			while (*data++)
-				msg << *data;
-			return msg;
+				*this << *data;
+			return *this;
 		}
 
 		template<>
-		friend Message &operator << <std::string>(Message &msg, const std::string &data)
+		Message &operator <<(const std::string &data)
 		{
 			for (const char &c : data)
-				msg << c;
-			return msg;
+				*this << c;
+			return *this << (char)0;
 		}
 
 		template<>
-		friend Message &operator << <std::string_view>(Message &msg, const std::string_view &data)
+		Message &operator <<(const std::string_view &data)
 		{
 			for (const char &c : data)
-				msg << c;
-			return msg;
+				*this << c;
+			return *this << (char)0;
 		}
 
 		template<typename DataType>
