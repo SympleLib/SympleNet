@@ -101,43 +101,6 @@ int main()
 
 	std::thread inputThread(HandleInput);
 
-	{
-		std::string test = "Hello!";
-		Symple::Net::Message<uint32_t> msg;
-		msg << test;
-		std::cout << test << '\n';
-		test = "no u";
-		std::cout << test << '\n';
-		msg >> test;
-		std::cout << test << '\n';
-	}
-
-	{
-		std::string_view test = "Hello!";
-		Symple::Net::Message<uint32_t> msg;
-		msg << test;
-		std::cout << test << '\n';
-		test = "no u";
-		std::cout << test << '\n';
-		msg >> test;
-		std::cout << test << '\n';
-
-		delete[] test.data();
-	}
-
-	{
-		const char *test = "Hello!";
-		Symple::Net::Message<uint32_t> msg;
-		msg << test;
-		std::cout << test << '\n';
-		test = "no u";
-		std::cout << test << '\n';
-		msg >> test;
-		std::cout << test << '\n';
-
-		delete[] test;
-	}
-
 	while (!s_ShouldQuit)
 	{
 		if (s_Client.IsConnected())
